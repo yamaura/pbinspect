@@ -1,9 +1,9 @@
 use leptos::prelude::*;
-use leptos::wasm_bindgen::JsCast;
 use leptos::task::spawn_local;
+use leptos::wasm_bindgen::JsCast;
 
-use web_sys::{window, Clipboard, ClipboardItem, Blob};
 use web_sys::js_sys;
+use web_sys::{window, Blob, Clipboard, ClipboardItem};
 
 #[derive(Clone, Debug)]
 pub struct Item {
@@ -66,27 +66,23 @@ fn ClipboardInspector() -> impl IntoView {
                 let types = clipboard_item.types();
 
                 for type_ in types.iter() {
-                if let Some(mime) = type_.as_string() {
-                    let blob = clipboard_item.get_type(&mime);
-                    let blob = wasm_bindgen_futures::JsFuture::from(blob)
-                        .await
-                        .unwrap();
-                    let js_typeof = blob.js_typeof().as_string().unwrap();
-                    let blob = blob.unchecked_into::<Blob>();
-                    let text = wasm_bindgen_futures::JsFuture::from(blob.text())
-                        .await
-                        .unwrap();
+                    if let Some(mime) = type_.as_string() {
+                        let blob = clipboard_item.get_type(&mime);
+                        let blob = wasm_bindgen_futures::JsFuture::from(blob).await.unwrap();
+                        let js_typeof = blob.js_typeof().as_string().unwrap();
+                        let blob = blob.unchecked_into::<Blob>();
+                        let text = wasm_bindgen_futures::JsFuture::from(blob.text())
+                            .await
+                            .unwrap();
 
-                    set_clipboard_data.update(|data| {
-                        data.push(
-                            Item{
+                        set_clipboard_data.update(|data| {
+                            data.push(Item {
                                 mime: mime.clone(),
                                 js_typeof,
                                 data: text.as_string().unwrap_or("N/A".to_string()),
-                            }
-                        )
-                    });
-                }
+                            })
+                        });
+                    }
                 }
             }
         });
@@ -94,12 +90,12 @@ fn ClipboardInspector() -> impl IntoView {
 
     view! {
         <div>
-            <input type="text" on:paste=inspect_clipboard placeholder="paste here!"/>
+            <input type="text" on:paste=inspect_clipboard placeholder="paste here!" />
 
             <div>
                 <h3>{"Clipboard Data: "}</h3>
                 <div>
-                    <DataTable datas=clipboard_data/>
+                    <DataTable datas=clipboard_data />
                 </div>
             </div>
             <div>
