@@ -1,8 +1,9 @@
-use leptos::*;
+use leptos::prelude::*;
+use leptos::wasm_bindgen::JsCast;
+use leptos::task::spawn_local;
 
 use web_sys::{window, Clipboard, ClipboardItem, Blob};
 use web_sys::js_sys;
-use wasm_bindgen::JsCast;
 
 #[derive(Clone, Debug)]
 pub struct Item {
@@ -26,14 +27,14 @@ fn DataTable(datas: ReadSignal<Vec<Item>>) -> impl IntoView {
                 {move || {
                     datas
                         .get()
-                        .iter()
+                        .into_iter()
                         .map(|data| {
                             view! {
                                 <tr>
-                                    <td style="vertical-align: top;">{&data.mime}</td>
-                                    <td>{&data.js_typeof}</td>
+                                    <td style="vertical-align: top;">{data.mime}</td>
+                                    <td>{data.js_typeof}</td>
                                     <td>
-                                        <pre>{&data.data}</pre>
+                                        <pre>{data.data}</pre>
                                     </td>
                                 </tr>
                             }
@@ -53,7 +54,7 @@ fn ClipboardInspector() -> impl IntoView {
         set_clipboard_data.set(Vec::new());
 
         let window = window().unwrap();
-        let clipboard: Clipboard = window.navigator().clipboard().unwrap();
+        let clipboard: Clipboard = window.navigator().clipboard();
 
         spawn_local(async move {
             let items = clipboard.read();
@@ -117,5 +118,5 @@ fn ClipboardInspector() -> impl IntoView {
 }
 
 fn main() {
-    leptos::mount_to_body(ClipboardInspector);
+    mount_to_body(ClipboardInspector);
 }
