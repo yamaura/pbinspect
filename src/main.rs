@@ -1,9 +1,5 @@
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use leptos::wasm_bindgen::JsCast;
-
-use web_sys::js_sys;
-use web_sys::{window, Blob, Clipboard, ClipboardItem};
 
 #[derive(Clone, Debug)]
 pub struct Item {
@@ -53,37 +49,21 @@ fn ClipboardInspector() -> impl IntoView {
     let inspect_clipboard = move |_| {
         set_clipboard_data.set(Vec::new());
 
-        let window = window().unwrap();
-        let clipboard: Clipboard = window.navigator().clipboard();
-
         spawn_local(async move {
-            let items = clipboard.read();
-            let items = wasm_bindgen_futures::JsFuture::from(items).await.unwrap();
-            let items: js_sys::Array = items.unchecked_into();
+            let items = pbinspect::read_clipboard_items().await.unwrap();
 
-            for item in items.iter() {
-                let clipboard_item: ClipboardItem = item.dyn_into().unwrap();
-                let types = clipboard_item.types();
+            for item in items.into_iter() {
+                let blob = item.blob.into();
+                let data = gloo_file::futures::read_as_bytes(&blob).await.unwrap();
+                let text = String::from_utf8(data.to_vec()).unwrap_or_else(|_| "Binary Data".to_string());
 
-                for type_ in types.iter() {
-                    if let Some(mime) = type_.as_string() {
-                        let blob = clipboard_item.get_type(&mime);
-                        let blob = wasm_bindgen_futures::JsFuture::from(blob).await.unwrap();
-                        let js_typeof = blob.js_typeof().as_string().unwrap();
-                        let blob = blob.unchecked_into::<Blob>();
-                        let text = wasm_bindgen_futures::JsFuture::from(blob.text())
-                            .await
-                            .unwrap();
-
-                        set_clipboard_data.update(|data| {
-                            data.push(Item {
-                                mime: mime.clone(),
-                                js_typeof,
-                                data: text.as_string().unwrap_or("N/A".to_string()),
-                            })
-                        });
-                    }
-                }
+                set_clipboard_data.update(|data| {
+                    data.push(Item {
+                        mime: item.mime,
+                        js_typeof: item.js_typeof,
+                        data: text,
+                    })
+                });
             }
         });
     };
