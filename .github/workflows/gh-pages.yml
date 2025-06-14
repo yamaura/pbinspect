@@ -27,7 +27,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/configure-pages@v5
-#    - run: rustup target add wasm32-unknown-unknown
+    - run: rustup target add wasm32-unknown-unknown
     - run: curl -sfL https://github.com/trunk-rs/trunk/releases/download/v0.21.8/trunk-x86_64-unknown-linux-musl.tar.gz | tar zxv
     - run: ./trunk build --release --public-url /pbinspect
     - uses: actions/upload-pages-artifact@v3
